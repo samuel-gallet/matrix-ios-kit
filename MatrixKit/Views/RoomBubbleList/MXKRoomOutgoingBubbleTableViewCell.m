@@ -57,6 +57,13 @@
             }
         }
     }
+    if (!self.bubbleInfoContainer.isHidden) {
+        [self.bubbleInfoContainer setNeedsLayout];
+        [self.bubbleInfoContainer layoutIfNeeded];
+        self.msgTextViewLeadingConstraint.constant = 15 + CGRectGetWidth(self.bubbleInfoContainer.bounds);
+    } else {
+        self.msgTextViewLeadingConstraint.constant = 55;
+    }
 }
 
 - (void)didEndDisplay

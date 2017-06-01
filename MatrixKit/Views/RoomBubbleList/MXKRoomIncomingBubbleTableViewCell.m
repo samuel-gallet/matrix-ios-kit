@@ -48,6 +48,13 @@
             }
         }
     }
+    if (!self.bubbleInfoContainer.isHidden) {
+        [self.bubbleInfoContainer setNeedsLayout];
+        [self.bubbleInfoContainer layoutIfNeeded];
+        self.msgTextViewTrailingConstraint.constant = 15 + CGRectGetWidth(self.bubbleInfoContainer.bounds);
+    } else {
+        self.msgTextViewTrailingConstraint.constant = 55;
+    }
 }
 
 @end
