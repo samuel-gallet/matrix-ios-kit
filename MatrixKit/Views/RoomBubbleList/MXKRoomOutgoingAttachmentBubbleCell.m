@@ -31,10 +31,6 @@
     
     if (bubbleData)
     {
-        // Do not display activity indicator on outgoing attachments (These attachments are supposed to be stored locally)
-        // Some download may append to retrieve the actual thumbnail after posting an image.
-        self.attachmentView.hideActivityIndicator = YES;
-        
         // Check if the attachment is uploading
         MXKRoomBubbleComponent *component = bubbleData.bubbleComponents.firstObject;
         if (component.event.sentState == MXEventSentStatePreparing || component.event.sentState == MXEventSentStateEncrypting || component.event.sentState == MXEventSentStateUploading)

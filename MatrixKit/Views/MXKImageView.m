@@ -631,10 +631,15 @@
     
     // Remove the existing image (if any) by using the potential preview.
     self.image = attachment.previewImage;
-    
+    if (!_hideActivityIndicator) {
+        [self startActivityIndicator];
+    }
     [attachment getThumbnail:^(UIImage *img) {
         self.image = img;
-    } failure:nil];
+        [self stopActivityIndicator];
+    } failure:^(NSError *error) {
+        [self stopActivityIndicator];
+    }];
 }
 
 - (void)onMediaDownloadEnd:(NSNotification *)notif
