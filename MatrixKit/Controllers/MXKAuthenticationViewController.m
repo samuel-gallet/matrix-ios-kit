@@ -1175,63 +1175,12 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
 - (void)updateRESTClient
 {
     NSString *homeserverURL = _homeServerTextField.text;
-
     if (homeserverURL.length)
     {
         // Check change
         if ([homeserverURL isEqualToString:_mxRestClient.homeserver] == NO)
         {
-            _mxRestClient = [[MXRestClient alloc] initWithHomeServer:homeserverURL andOnUnrecognizedCertificateBlock:^BOOL(NSData *certificate) {
-
-                // Check first if the app developer provided its own certificate handler.
-                if (onUnrecognizedCertificateCustomBlock)
-                {
-                    return onUnrecognizedCertificateCustomBlock (certificate);
-                }
-
-                // Else prompt the user by displaying a fingerprint (SHA256) of the certificate.
-                __block BOOL isTrusted;
-                dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-
-                NSString *title = [NSBundle mxk_localizedStringForKey:@"ssl_could_not_verify"];
-                NSString *homeserverURLStr = [NSString stringWithFormat:[NSBundle mxk_localizedStringForKey:@"ssl_homeserver_url"], homeserverURL];
-                NSString *fingerprint = [NSString stringWithFormat:[NSBundle mxk_localizedStringForKey:@"ssl_fingerprint_hash"], @"SHA256"];
-                NSString *certFingerprint = [certificate mx_SHA256AsHexString];
-
-                NSString *msg = [NSString stringWithFormat:@"%@\n\n%@\n\n%@\n\n%@\n\n%@\n\n%@", [NSBundle mxk_localizedStringForKey:@"ssl_cert_not_trust"], [NSBundle mxk_localizedStringForKey:@"ssl_cert_new_account_expl"], homeserverURLStr, fingerprint, certFingerprint, [NSBundle mxk_localizedStringForKey:@"ssl_only_accept"]];
-
-                alert = [[MXKAlert alloc] initWithTitle:title message:msg style:MXKAlertStyleAlert];
-                alert.cancelButtonIndex = [alert addActionWithTitle:[NSBundle mxk_localizedStringForKey:@"cancel"] style:MXKAlertActionStyleDefault handler:^(MXKAlert *alert){
-
-                    isTrusted = NO;
-                    dispatch_semaphore_signal(semaphore);
-
-                }];
-                [alert addActionWithTitle:[NSBundle mxk_localizedStringForKey:@"ssl_trust"] style:MXKAlertActionStyleDefault handler:^(MXKAlert *alert){
-
-                    isTrusted = YES;
-                    dispatch_semaphore_signal(semaphore);
-
-                }];
-
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [alert showInViewController:self];
-                });
-
-                dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-
-                if (!isTrusted)
-                {
-                    // Cancel request in progress
-                    [mxCurrentOperation cancel];
-                    mxCurrentOperation = nil;
-                    [[NSNotificationCenter defaultCenter] removeObserver:self name:AFNetworkingReachabilityDidChangeNotification object:nil];
-
-                    [_authenticationActivityIndicator stopAnimating];
-                }
-
-                return isTrusted;
-            }];
+            _mxRestClient = [[MXRestClient alloc] initWithHomeServer:homeserverURL andOnUnrecognizedCertificateBlock:nil];
 
             if (_identityServerTextField.text.length)
             {
