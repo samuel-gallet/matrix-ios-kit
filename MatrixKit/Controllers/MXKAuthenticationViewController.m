@@ -33,11 +33,6 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
 @interface MXKAuthenticationViewController ()
 {
     /**
-     The matrix REST client used to make matrix API requests.
-     */
-    MXRestClient *mxRestClient;
-    
-    /**
      Current request in progress.
      */
     MXHTTPOperation *mxCurrentOperation;
@@ -275,8 +270,8 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
         mxCurrentOperation = nil;
     }
     
-    [mxRestClient close];
-    mxRestClient = nil;
+    [_mxRestClient close];
+    _mxRestClient = nil;
 
     authenticationFallback = nil;
     cancelFallbackBarButton = nil;
@@ -494,7 +489,7 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
     
     _homeServerTextField.text = homeServerUrl;
     
-    if (!mxRestClient || ![mxRestClient.homeserver isEqualToString:homeServerUrl])
+    if (!_mxRestClient || ![_mxRestClient.homeserver isEqualToString:homeServerUrl])
     {
         [self updateRESTClient];
         
@@ -517,9 +512,9 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
     _identityServerTextField.text = identityServerUrl;
     
     // Update REST client
-    if (![mxRestClient.identityServer isEqualToString:identityServerUrl])
+    if (![_mxRestClient.identityServer isEqualToString:identityServerUrl])
     {
-        [mxRestClient setIdentityServer:identityServerUrl];
+        [_mxRestClient setIdentityServer:identityServerUrl];
     }
 }
 
@@ -546,11 +541,11 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
     // Reset potential authentication fallback url
     authenticationFallback = nil;
     
-    if (mxRestClient)
+    if (_mxRestClient)
     {
         if (_authType == MXKAuthenticationTypeLogin)
         {
-            mxCurrentOperation = [mxRestClient getLoginSession:^(MXAuthenticationSession* authSession) {
+            mxCurrentOperation = [_mxRestClient getLoginSession:^(MXAuthenticationSession* authSession) {
                 
                 [self handleAuthenticationSession:authSession];
                 
@@ -562,7 +557,7 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
         }
         else if (_authType == MXKAuthenticationTypeRegister)
         {
-            mxCurrentOperation = [mxRestClient getRegisterSession:^(MXAuthenticationSession* authSession){
+            mxCurrentOperation = [_mxRestClient getRegisterSession:^(MXAuthenticationSession* authSession){
                 
                 [self handleAuthenticationSession:authSession];
                 
@@ -590,13 +585,13 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
     Class authInputsViewClass;
     if (_authType == MXKAuthenticationTypeLogin)
     {
-        authenticationFallback = [mxRestClient loginFallback];
+        authenticationFallback = [_mxRestClient loginFallback];
         authInputsViewClass = loginAuthInputsViewClass;
         
     }
     else if (_authType == MXKAuthenticationTypeRegister)
     {
-        authenticationFallback = [mxRestClient registerFallback];
+        authenticationFallback = [_mxRestClient registerFallback];
         authInputsViewClass = registerAuthInputsViewClass;
     }
     else
@@ -769,7 +764,7 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
 
 - (void)isUserNameInUse:(void (^)(BOOL isUserNameInUse))callback
 {
-    mxCurrentOperation = [mxRestClient isUserNameInUse:self.authInputsView.userId callback:^(BOOL isUserNameInUse) {
+    mxCurrentOperation = [_mxRestClient isUserNameInUse:self.authInputsView.userId callback:^(BOOL isUserNameInUse) {
         
         mxCurrentOperation = nil;
         
@@ -806,7 +801,7 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
                 // Prepare the parameters dict
                 [self.authInputsView prepareParameters:^(NSDictionary *parameters) {
                     
-                    if (parameters && mxRestClient)
+                    if (parameters && _mxRestClient)
                     {
                         [_authenticationActivityIndicator startAnimating];
                         [self loginWithParameters:parameters];
@@ -835,7 +830,7 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
                                                      @"password": self.authInputsView.password,
                                                      @"bind_email": @(NO)};
                         
-                        mxCurrentOperation = [mxRestClient registerWithParameters:parameters success:^(NSDictionary *JSONResponse) {
+                        mxCurrentOperation = [_mxRestClient registerWithParameters:parameters success:^(NSDictionary *JSONResponse) {
                             
                             // Unexpected case where the registration succeeds without any other stages
                             MXCredentials *credentials = [MXCredentials modelFromJSON:JSONResponse];
@@ -849,9 +844,9 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
                             {
                                 NSLog(@"[MXKAuthenticationVC] Registration succeeded");
                                 // Workaround: HS does not return the right URL. Use the one we used to make the request
-                                credentials.homeServer = mxRestClient.homeserver;
+                                credentials.homeServer = _mxRestClient.homeserver;
                                 // Report the certificate trusted by user (if any)
-                                credentials.allowedCertificate = mxRestClient.allowedCertificate;
+                                credentials.allowedCertificate = _mxRestClient.allowedCertificate;
                                 
                                 [self onSuccessfulLogin:credentials];
                             }
@@ -879,7 +874,7 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
                                 // Launch registration by preparing parameters dict
                                 [self.authInputsView prepareParameters:^(NSDictionary *parameters) {
                                     
-                                    if (parameters && mxRestClient)
+                                    if (parameters && _mxRestClient)
                                     {
                                         [_authenticationActivityIndicator startAnimating];
                                         [self registerWithParameters:parameters];
@@ -914,7 +909,7 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
                                 // Launch registration by preparing parameters dict
                                 [self.authInputsView prepareParameters:^(NSDictionary *parameters) {
                                     
-                                    if (parameters && mxRestClient)
+                                    if (parameters && _mxRestClient)
                                     {
                                         [_authenticationActivityIndicator startAnimating];
                                         [self registerWithParameters:parameters];
@@ -936,7 +931,7 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
                     // Launch registration by preparing parameters dict
                     [self.authInputsView prepareParameters:^(NSDictionary *parameters) {
                         
-                        if (parameters && mxRestClient)
+                        if (parameters && _mxRestClient)
                         {
                             [_authenticationActivityIndicator startAnimating];
                             [self registerWithParameters:parameters];
@@ -968,7 +963,7 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
                     // Prepare the parameters dict
                     [self.authInputsView prepareParameters:^(NSDictionary *parameters) {
                         
-                        if (parameters && mxRestClient)
+                        if (parameters && _mxRestClient)
                         {
                             [_authenticationActivityIndicator startAnimating];
                             [self resetPasswordWithParameters:parameters];
@@ -1177,6 +1172,80 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
     }
 }
 
+- (void)updateRESTClient
+{
+    NSString *homeserverURL = _homeServerTextField.text;
+
+    if (homeserverURL.length)
+    {
+        // Check change
+        if ([homeserverURL isEqualToString:_mxRestClient.homeserver] == NO)
+        {
+            _mxRestClient = [[MXRestClient alloc] initWithHomeServer:homeserverURL andOnUnrecognizedCertificateBlock:^BOOL(NSData *certificate) {
+
+                // Check first if the app developer provided its own certificate handler.
+                if (onUnrecognizedCertificateCustomBlock)
+                {
+                    return onUnrecognizedCertificateCustomBlock (certificate);
+                }
+
+                // Else prompt the user by displaying a fingerprint (SHA256) of the certificate.
+                __block BOOL isTrusted;
+                dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+
+                NSString *title = [NSBundle mxk_localizedStringForKey:@"ssl_could_not_verify"];
+                NSString *homeserverURLStr = [NSString stringWithFormat:[NSBundle mxk_localizedStringForKey:@"ssl_homeserver_url"], homeserverURL];
+                NSString *fingerprint = [NSString stringWithFormat:[NSBundle mxk_localizedStringForKey:@"ssl_fingerprint_hash"], @"SHA256"];
+                NSString *certFingerprint = [certificate mx_SHA256AsHexString];
+
+                NSString *msg = [NSString stringWithFormat:@"%@\n\n%@\n\n%@\n\n%@\n\n%@\n\n%@", [NSBundle mxk_localizedStringForKey:@"ssl_cert_not_trust"], [NSBundle mxk_localizedStringForKey:@"ssl_cert_new_account_expl"], homeserverURLStr, fingerprint, certFingerprint, [NSBundle mxk_localizedStringForKey:@"ssl_only_accept"]];
+
+                alert = [[MXKAlert alloc] initWithTitle:title message:msg style:MXKAlertStyleAlert];
+                alert.cancelButtonIndex = [alert addActionWithTitle:[NSBundle mxk_localizedStringForKey:@"cancel"] style:MXKAlertActionStyleDefault handler:^(MXKAlert *alert){
+
+                    isTrusted = NO;
+                    dispatch_semaphore_signal(semaphore);
+
+                }];
+                [alert addActionWithTitle:[NSBundle mxk_localizedStringForKey:@"ssl_trust"] style:MXKAlertActionStyleDefault handler:^(MXKAlert *alert){
+
+                    isTrusted = YES;
+                    dispatch_semaphore_signal(semaphore);
+
+                }];
+
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [alert showInViewController:self];
+                });
+
+                dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+
+                if (!isTrusted)
+                {
+                    // Cancel request in progress
+                    [mxCurrentOperation cancel];
+                    mxCurrentOperation = nil;
+                    [[NSNotificationCenter defaultCenter] removeObserver:self name:AFNetworkingReachabilityDidChangeNotification object:nil];
+
+                    [_authenticationActivityIndicator stopAnimating];
+                }
+
+                return isTrusted;
+            }];
+
+            if (_identityServerTextField.text.length)
+            {
+                [_mxRestClient setIdentityServer:_identityServerTextField.text];
+            }
+        }
+    }
+    else
+    {
+        [_mxRestClient close];
+        _mxRestClient = nil;
+    }
+}
+
 #pragma mark - Privates
 
 - (void)refreshForgotPasswordSession
@@ -1226,83 +1295,9 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
     }
 }
 
-- (void)updateRESTClient
-{
-    NSString *homeserverURL = _homeServerTextField.text;
-    
-    if (homeserverURL.length)
-    {
-        // Check change
-        if ([homeserverURL isEqualToString:mxRestClient.homeserver] == NO)
-        {
-            mxRestClient = [[MXRestClient alloc] initWithHomeServer:homeserverURL andOnUnrecognizedCertificateBlock:^BOOL(NSData *certificate) {
-                
-                // Check first if the app developer provided its own certificate handler.
-                if (onUnrecognizedCertificateCustomBlock)
-                {
-                    return onUnrecognizedCertificateCustomBlock (certificate);
-                }
-                
-                // Else prompt the user by displaying a fingerprint (SHA256) of the certificate.
-                __block BOOL isTrusted;
-                dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-                
-                NSString *title = [NSBundle mxk_localizedStringForKey:@"ssl_could_not_verify"];
-                NSString *homeserverURLStr = [NSString stringWithFormat:[NSBundle mxk_localizedStringForKey:@"ssl_homeserver_url"], homeserverURL];
-                NSString *fingerprint = [NSString stringWithFormat:[NSBundle mxk_localizedStringForKey:@"ssl_fingerprint_hash"], @"SHA256"];
-                NSString *certFingerprint = [certificate mx_SHA256AsHexString];
-                
-                NSString *msg = [NSString stringWithFormat:@"%@\n\n%@\n\n%@\n\n%@\n\n%@\n\n%@", [NSBundle mxk_localizedStringForKey:@"ssl_cert_not_trust"], [NSBundle mxk_localizedStringForKey:@"ssl_cert_new_account_expl"], homeserverURLStr, fingerprint, certFingerprint, [NSBundle mxk_localizedStringForKey:@"ssl_only_accept"]];
-                
-                alert = [[MXKAlert alloc] initWithTitle:title message:msg style:MXKAlertStyleAlert];
-                alert.cancelButtonIndex = [alert addActionWithTitle:[NSBundle mxk_localizedStringForKey:@"cancel"] style:MXKAlertActionStyleDefault handler:^(MXKAlert *alert){
-                    
-                    isTrusted = NO;
-                    dispatch_semaphore_signal(semaphore);
-                    
-                }];
-                [alert addActionWithTitle:[NSBundle mxk_localizedStringForKey:@"ssl_trust"] style:MXKAlertActionStyleDefault handler:^(MXKAlert *alert){
-                    
-                    isTrusted = YES;
-                    dispatch_semaphore_signal(semaphore);
-                    
-                }];
-                
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [alert showInViewController:self];
-                });
-                
-                dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-                
-                if (!isTrusted)
-                {
-                    // Cancel request in progress
-                    [mxCurrentOperation cancel];
-                    mxCurrentOperation = nil;
-                    [[NSNotificationCenter defaultCenter] removeObserver:self name:AFNetworkingReachabilityDidChangeNotification object:nil];
-
-                    [_authenticationActivityIndicator stopAnimating];
-                }
-                
-                return isTrusted;
-            }];
-            
-            if (_identityServerTextField.text.length)
-            {
-                [mxRestClient setIdentityServer:_identityServerTextField.text];
-            }
-        }
-    }
-    else
-    {
-        [mxRestClient close];
-        mxRestClient = nil;
-    }
-}
-
 - (void)loginWithParameters:(NSDictionary*)parameters
 {
-    mxCurrentOperation = [mxRestClient login:parameters success:^(NSDictionary *JSONResponse) {
+    mxCurrentOperation = [_mxRestClient login:parameters success:^(NSDictionary *JSONResponse) {
         
         MXCredentials *credentials = [MXCredentials modelFromJSON:JSONResponse];
         
@@ -1316,9 +1311,9 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
             NSLog(@"[MXKAuthenticationVC] Login process succeeded");
             
             // Workaround: HS does not return the right URL. Use the one we used to make the request
-            credentials.homeServer = mxRestClient.homeserver;
+            credentials.homeServer = _mxRestClient.homeserver;
             // Report the certificate trusted by user (if any)
-            credentials.allowedCertificate = mxRestClient.allowedCertificate;
+            credentials.allowedCertificate = _mxRestClient.allowedCertificate;
             
             [self onSuccessfulLogin:credentials];
         }
@@ -1338,7 +1333,7 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
         registrationTimer = nil;
     }
     
-    mxCurrentOperation = [mxRestClient registerWithParameters:parameters success:^(NSDictionary *JSONResponse) {
+    mxCurrentOperation = [_mxRestClient registerWithParameters:parameters success:^(NSDictionary *JSONResponse) {
         
         MXCredentials *credentials = [MXCredentials modelFromJSON:JSONResponse];
         
@@ -1351,9 +1346,9 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
         {
             NSLog(@"[MXKAuthenticationVC] Registration succeeded");
             // Workaround: HS does not return the right URL. Use the one we used to make the request
-            credentials.homeServer = mxRestClient.homeserver;
+            credentials.homeServer = _mxRestClient.homeserver;
             // Report the certificate trusted by user (if any)
-            credentials.allowedCertificate = mxRestClient.allowedCertificate;
+            credentials.allowedCertificate = _mxRestClient.allowedCertificate;
             
             [self onSuccessfulLogin:credentials];
         }
@@ -1433,7 +1428,7 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
 
 - (void)resetPasswordWithParameters:(NSDictionary*)parameters
 {
-    mxCurrentOperation = [mxRestClient resetPasswordWithParameters:parameters success:^() {
+    mxCurrentOperation = [_mxRestClient resetPasswordWithParameters:parameters success:^() {
         
         NSLog(@"[MXKAuthenticationVC] Reset password succeeded");
         
@@ -1655,7 +1650,7 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
 
 - (MXRestClient *)authInputsViewThirdPartyIdValidationRestClient:(MXKAuthInputsView *)authInputsView
 {
-    return mxRestClient;
+    return _mxRestClient;
 }
 
 #pragma mark - Authentication Fallback
@@ -1681,7 +1676,7 @@ NSString *const MXKAuthErrorDomain = @"MXKAuthErrorDomain";
     [_authFallbackWebView openFallbackPage:fallbackPage success:^(MXCredentials *credentials) {
         
         // Workaround: HS does not return the right URL. Use the one we used to make the request
-        credentials.homeServer = mxRestClient.homeserver;
+        credentials.homeServer = _mxRestClient.homeserver;
         
         // TODO handle unrecognized certificate (if any) during registration through fallback webview.
         

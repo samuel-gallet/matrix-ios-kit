@@ -134,6 +134,11 @@ extern NSString *const MXKAuthErrorDomain;
 @property (nonatomic) id<MXKAuthenticationViewControllerDelegate> delegate;
 
 /**
+ The matrix REST client used to make matrix API requests.
+ */
+@property (nonatomic, readonly) MXRestClient *mxRestClient;
+
+/**
  Returns the `UINib` object initialized for a `MXKAuthenticationViewController`.
  
  @return The initialized `UINib` object or `nil` if there were errors during initialization
@@ -237,6 +242,11 @@ extern NSString *const MXKAuthErrorDomain;
  @param credentials the user's credentials.
  */
 - (void)onSuccessfulLogin:(MXCredentials*)credentials;
+
+/**
+ Edit rest client
+ */
+- (void)updateRESTClient;
 
 @end
 

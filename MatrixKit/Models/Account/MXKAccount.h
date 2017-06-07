@@ -296,6 +296,12 @@ typedef BOOL (^MXKAccountOnCertificateChange)(MXKAccount *mxAccount, NSData *cer
  */
 - (void)loadDeviceInformation:(void (^)())success failure:(void (^)(NSError *error))failure;
 
+/**
+ Set the certificates used to evaluate server trust according to the SSL pinning mode.
+ @param Pinned certificates
+ */
+-(void)setPinnedCertificates:(NSSet <NSData *> *)pinnedCertificates;
+
 #pragma mark - Push notification listeners
 /**
  Register a listener to push notifications for the account's session.

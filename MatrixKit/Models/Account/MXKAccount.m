@@ -419,6 +419,14 @@ static MXKAccountOnCertificateChange _onCertificateChangeBlock;
     [[MXKAccountManager sharedManager] saveAccounts];
 }
 
+/**
+ Set the certificates used to evaluate server trust according to the SSL pinning mode.
+ @param Pinned certificates
+ */
+-(void)setPinnedCertificates:(NSSet <NSData *> *)pinnedCertificates {
+    [mxRestClient setPinnedCertificates:pinnedCertificates];
+}
+
 #pragma mark - Matrix user's profile
 
 - (void)setUserDisplayName:(NSString*)displayname success:(void (^)())success failure:(void (^)(NSError *error))failure
