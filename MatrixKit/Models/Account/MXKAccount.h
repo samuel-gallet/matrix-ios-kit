@@ -168,6 +168,11 @@ typedef BOOL (^MXKAccountOnCertificateChange)(MXKAccount *mxAccount, NSData *cer
 @property (nonatomic,getter=isWarnedAboutEncryption) BOOL warnedAboutEncryption;
 
 /**
+ * The certificates used to evaluate server trust according to the SSL pinning mode.
+ */
+@property (nonatomic) NSSet <NSData *> * pinnedCertificates;
+
+/**
  Register the MXKAccountOnCertificateChange block that will be used to handle certificate change during account use.
  This block is nil by default, any new certificate is ignored/untrusted (this will abort the connection to the server).
  
@@ -295,12 +300,6 @@ typedef BOOL (^MXKAccountOnCertificateChange)(MXKAccount *mxAccount, NSData *cer
  @param failure A block object called when the operation fails.
  */
 - (void)loadDeviceInformation:(void (^)())success failure:(void (^)(NSError *error))failure;
-
-/**
- Set the certificates used to evaluate server trust according to the SSL pinning mode.
- @param Pinned certificates
- */
--(void)setPinnedCertificates:(NSSet <NSData *> *)pinnedCertificates;
 
 #pragma mark - Push notification listeners
 /**

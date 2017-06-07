@@ -74,7 +74,6 @@ static MXKAccountOnCertificateChange _onCertificateChangeBlock;
 }
 
 @property (nonatomic) UIBackgroundTaskIdentifier bgTask;
-
 @end
 
 @implementation MXKAccount
@@ -188,6 +187,9 @@ static MXKAccountOnCertificateChange _onCertificateChangeBlock;
         _disabled = [coder decodeBoolForKey:@"disabled"];
 
         _warnedAboutEncryption = [coder decodeBoolForKey:@"warnedAboutEncryption"];
+
+        NSArray * certificateArray = [coder decodeObjectForKey:NSStringFromSelector(@selector(pinnedCertificates))];
+        _pinnedCertificates = [NSSet setWithArray:certificateArray];
         
         // Refresh device information
         [self loadDeviceInformation:nil failure:nil];
@@ -238,6 +240,9 @@ static MXKAccountOnCertificateChange _onCertificateChangeBlock;
     [coder encodeBool:_disabled forKey:@"disabled"];
 
     [coder encodeBool:_warnedAboutEncryption forKey:@"warnedAboutEncryption"];
+    if (self.pinnedCertificates) {
+        [coder encodeObject:self.pinnedCertificates.allObjects forKey:NSStringFromSelector(@selector(pinnedCertificates))];
+    }
 }
 
 #pragma mark - Properties
@@ -419,11 +424,8 @@ static MXKAccountOnCertificateChange _onCertificateChangeBlock;
     [[MXKAccountManager sharedManager] saveAccounts];
 }
 
-/**
- Set the certificates used to evaluate server trust according to the SSL pinning mode.
- @param Pinned certificates
- */
 -(void)setPinnedCertificates:(NSSet <NSData *> *)pinnedCertificates {
+    _pinnedCertificates = pinnedCertificates;
     [mxRestClient setPinnedCertificates:pinnedCertificates];
 }
 
